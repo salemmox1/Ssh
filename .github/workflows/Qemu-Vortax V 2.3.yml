@@ -78,7 +78,7 @@ jobs:
           pip install flask flask-socketio flask-cors requests psutil rich > /dev/null 2>&1
           chmod +x core/qemu/executor.sh 2>/dev/null || true
           echo "Starting Vortax App..."
-          nohup python3 app.py
+          nohup python3 app.py > /home/runner/vortax_app.log 2>&1 &
           echo "App is now running in background."
           
           echo "Setting password for user..."
@@ -187,6 +187,7 @@ jobs:
           if [ "$PROGRAM" = "NoMachine" ]; then
             echo "Configuring firewall. nomachine"
             sudo ufw allow 4000/tcp > /dev/null 2>&1
+            sudo ufw allow 5000/tcp > /dev/null 2>&1
             sudo ufw allow 4011:4999/tcp > /dev/null 2>&1
           fi
           
