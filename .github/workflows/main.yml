@@ -1,0 +1,57 @@
+name: Setup SSH Runner Auto Port
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup-ssh-runner:
+    runs-on: ubuntu-latest
+    env:
+      REMOTE_HOST: 109.122.18.29
+      REMOTE_USER: me2008
+      LOCAL_USER: runner
+      LOCAL_PASS: runner
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure Local User
+        run: |
+          echo "${LOCAL_USER}:${LOCAL_PASS}" | sudo chpasswd
+          echo "${LOCAL_USER} ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/${LOCAL_USER}
+
+      - name: Install SSH Tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq openssh-server autossh
+          sudo systemctl enable ssh
+          sudo systemctl start ssh
+
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${REMOTE_HOST} >> ~/.ssh/known_hosts
+
+      - name: Establish Dynamic Reverse Tunnel
+        run: |
+          BASE_PORT=22
+          TARGET_PORT="${BASE_PORT}4"
+          
+          autossh -fN -M 0 \
+            -o "ServerAliveInterval 30" \
+            -o "ServerAliveCountMax 3" \
+            -o "StrictHostKeyChecking=no" \
+            -R ${TARGET_PORT}:localhost:22 ${REMOTE_USER}@${REMOTE_HOST}
+            
+          echo "=== CONNECTION INFO ==="
+          echo "Remote Host: ${REMOTE_HOST}"
+          echo "Assigned Port: ${TARGET_PORT}"
+          echo "Connect via: ssh ${LOCAL_USER}@${REMOTE_HOST} -p ${TARGET_PORT}"
+          
+          tail -f /dev/null
