@@ -1,4 +1,4 @@
-name: Setup SSH Runner Auto Port
+name: Setup SSH Runner Debug Mode
 
 on:
   workflow_dispatch:
@@ -38,20 +38,22 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${REMOTE_HOST} >> ~/.ssh/known_hosts
 
-      - name: Establish Dynamic Reverse Tunnel
+      - name: Test Connection and Establish Tunnel
         run: |
-          BASE_PORT=22
-          TARGET_PORT="${BASE_PORT}4"
+          echo ">>> Testing SSH Auth..."
+          ssh -o BatchMode=yes -o ConnectTimeout=10 ${REMOTE_USER}@${REMOTE_HOST} "echo 'AUTH_SUCCESS'" || (echo "AUTH_FAILED: Check your Private Key in Secrets and authorized_keys on Server" && exit 1)
           
+          echo ">>> Establishing Reverse Tunnel on Port 224..."
           autossh -fN -M 0 \
             -o "ServerAliveInterval 30" \
             -o "ServerAliveCountMax 3" \
             -o "StrictHostKeyChecking=no" \
-            -R ${TARGET_PORT}:localhost:22 ${REMOTE_USER}@${REMOTE_HOST}
+            -R 224:localhost:22 ${REMOTE_USER}@${REMOTE_HOST}
             
-          echo "=== CONNECTION INFO ==="
-          echo "Remote Host: ${REMOTE_HOST}"
-          echo "Assigned Port: ${TARGET_PORT}"
-          echo "Connect via: ssh ${LOCAL_USER}@${REMOTE_HOST} -p ${TARGET_PORT}"
+          echo ">>> Tunnel requested. Checking if local port 22 is active..."
+          sudo netstat -tulpn | grep :22
+          
+          echo "=== CONNECTION READY ==="
+          echo "Run this on your PC: ssh ${LOCAL_USER}@${REMOTE_HOST} -p 224"
           
           tail -f /dev/null
