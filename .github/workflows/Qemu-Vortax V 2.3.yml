@@ -537,7 +537,8 @@ jobs:
           echo "VNC password applied successfully!"
           
           echo "Starting Bore tunnel for $PROTOCOL (Port $PORT)..."
-            nohup bore local 5000 -to bore.pub > bore_log.log 2>&1 &
+            nohup bore local 5000 -to bore.pub 
+            #bore_log.log 2>&1 &
             sleep 5
             
             TUNNEL_INFO=$(grep "listening at bore.pub" bore_log.log | tail -n 1)
