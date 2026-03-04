@@ -93,6 +93,10 @@ jobs:
       - name: Setup Connection (Tailscale or Ngrok)
         run: |
           METHOD="${{ github.event.inputs.connection_method }}"
+          echo "Installing bore-cli..."
+          cargo install bore-cli > /dev/null 2>&1
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH 
+          
           if [ "$METHOD" = "tailscale" ]; then
             echo "Installing Tailscale..."
             curl -fsSL https://tailscale.com/install.sh | sudo sh > /dev/null 2>&1
