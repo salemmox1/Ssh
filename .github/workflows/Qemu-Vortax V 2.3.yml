@@ -68,11 +68,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prepare user and sudo
+      - name: Prepare sudo && Vortax UI
         run: |
-       - name: Extract and Setup Vortax App
-        run: |
-          # 1. فك ضغط مجلد المشروع
           echo "Unpacking app.zip..."
           unzip -q app.zip -d ./vortax_extracted
           APP_DIR=$(find ./vortax_extracted -name "app.py" -printf '%h\n' | head -n1)
