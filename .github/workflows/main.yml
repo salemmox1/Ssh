@@ -1,4 +1,4 @@
-name: Setup SSH Runner Debug Mode
+name: Setup SSH Runner High Port
 
 on:
   workflow_dispatch:
@@ -38,22 +38,18 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${REMOTE_HOST} >> ~/.ssh/known_hosts
 
-      - name: Test Connection and Establish Tunnel
+      - name: Establish Tunnel on Port 2224
         run: |
-          echo ">>> Testing SSH Auth..."
-          ssh -o BatchMode=yes -o ConnectTimeout=10 ${REMOTE_USER}@${REMOTE_HOST} "echo 'AUTH_SUCCESS'" || (echo "AUTH_FAILED: Check your Private Key in Secrets and authorized_keys on Server" && exit 1)
+          # نستخدم بورت 2224 لتجنب مشكلة Permission Denied
+          TARGET_PORT="2224"
           
-          echo ">>> Establishing Reverse Tunnel on Port 224..."
           autossh -fN -M 0 \
             -o "ServerAliveInterval 30" \
             -o "ServerAliveCountMax 3" \
             -o "StrictHostKeyChecking=no" \
-            -R 224:localhost:22 ${REMOTE_USER}@${REMOTE_HOST}
+            -R ${TARGET_PORT}:localhost:22 ${REMOTE_USER}@${REMOTE_HOST}
             
-          echo ">>> Tunnel requested. Checking if local port 22 is active..."
-          sudo netstat -tulpn | grep :22
-          
-          echo "=== CONNECTION READY ==="
-          echo "Run this on your PC: ssh ${LOCAL_USER}@${REMOTE_HOST} -p 224"
+          echo "=== CONNECTION INFO ==="
+          echo "Run this: ssh ${LOCAL_USER}@${REMOTE_HOST} -p ${TARGET_PORT}"
           
           tail -f /dev/null
